@@ -87,6 +87,9 @@ const FooterNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isChatPage = location.pathname === "/chat";
+  const isHomePage = location.pathname === "/";
+  const isReelsPage = location.pathname === "/reels";
+  const isLikesPage = location.pathname === "/likes";
   const { selectedChat } = useChat();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -148,7 +151,7 @@ const FooterNav = () => {
     }
   };
 
-  if (isChatPage && isMobileOrTablet && selectedChat) return null;
+  if (location.pathname === '/chat') return null;
 
   return (
     <>
@@ -159,17 +162,20 @@ const FooterNav = () => {
         <footer className="w-[400px] max-w-[90%] bg-white/30 backdrop-blur-md rounded-full px-8 py-4 flex justify-between items-center shadow-lg border border-white/20">
           <button
             onClick={() => navigate("/")}
-            className="bg-white/50 backdrop-blur-sm text-black p-3 rounded-full shadow hover:bg-purple-600 hover:text-white active:bg-purple-700 active:text-white transition-all duration-200"
+            className={`${isHomePage && !isMenuOpen ? "bg-purple-600 text-white" : "bg-white/50 text-black"} backdrop-blur-sm p-3 rounded-full shadow hover:bg-purple-600 hover:text-white active:bg-purple-700 active:text-white transition-all duration-200`}
           >
             <FaHome className="text-xl" />
           </button>
-          <button className="bg-white/50 backdrop-blur-sm text-black p-3 rounded-full shadow hover:bg-purple-600 hover:text-white active:bg-purple-700 active:text-white transition-all duration-200">
+          <button
+            onClick={() => navigate("/reels")}
+            className={`${isReelsPage ? "bg-purple-600 text-white" : "bg-white/50 text-black"} backdrop-blur-sm p-3 rounded-full shadow hover:bg-purple-600 hover:text-white active:bg-purple-700 active:text-white transition-all duration-200`}
+          >
             <MdVideoLibrary className="text-xl" />
           </button>
           <motion.button
             onClick={toggleMenu}
             whileTap={{ scale: 0.9 }}
-            className={`bg-white/50 backdrop-blur-sm text-black p-3 rounded-full shadow hover:bg-purple-600 active:bg-purple-700 transition-all duration-200 ${isMenuOpen ? "bg-purple-600" : ""}`}
+            className={`bg-white/50 backdrop-blur-sm text-black p-3 rounded-full shadow hover:bg-purple-600 active:bg-purple-700 transition-all duration-200 ${isMenuOpen ? "bg-purple-600 text-white" : ""}`}
           >
             <motion.div
               initial={false}
@@ -179,12 +185,15 @@ const FooterNav = () => {
               <FaPlus className="text-2xl" />
             </motion.div>
           </motion.button>
-          <button className="bg-white/50 backdrop-blur-sm text-black p-3 rounded-full shadow hover:bg-purple-600 hover:text-white active:bg-purple-700 active:text-white transition-all duration-200">
+          <button
+            onClick={() => navigate("/likes")}
+            className={`${isLikesPage ? "bg-purple-600 text-white" : "bg-white/50 text-black"} backdrop-blur-sm p-3 rounded-full shadow hover:bg-purple-600 hover:text-white active:bg-purple-700 active:text-white transition-all duration-200`}
+          >
             <FaHeart className="text-xl" />
           </button>
           <button
             onClick={() => navigate("/chat")}
-            className={`bg-white/50 backdrop-blur-sm p-3 rounded-full shadow hover:bg-purple-600 hover:text-white active:bg-purple-700 active:text-white transition-all duration-200 ${isChatPage ? "bg-purple-600 text-white" : "text-black"}`}
+            className={`${isChatPage ? "bg-purple-600 text-white" : "bg-white/50 text-black"} backdrop-blur-sm p-3 rounded-full shadow hover:bg-purple-600 hover:text-white active:bg-purple-700 active:text-white transition-all duration-200`}
           >
             <FaCommentDots className="text-xl" />
           </button>
@@ -253,6 +262,10 @@ const FooterNav = () => {
                         }
                         .animate-bounce-slow {
                           animation: bounce-slow 1.2s infinite;
+                        }
+                        @keyframes fadeInLeft {
+                          from { opacity: 0; transform: translateX(-16px); }
+                          to { opacity: 1; transform: translateX(0); }
                         }
                       `}</style>
                     </label>

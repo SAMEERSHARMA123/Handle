@@ -16,6 +16,9 @@ const Main = () => {
   const navigate = useNavigate();
   const [allPosts, setAllPosts] = useState([]);
   const [tokens,setTokens] = useState();
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletePostId, setDeletePostId] = useState(null);
 
   const scrollStories = (direction) => {
     const scrollAmount = 150;
@@ -89,35 +92,38 @@ const Main = () => {
        
   }
 
-  const handleDeletePost = async (id) => {
+  const handleDeletePost = (id) => {
+    setDeletePostId(id);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeletePost = async () => {
     try {
-      const confirmDelete = window.confirm("Are you sure you want to delete?");
-
-      if (confirmDelete) {
-        const query = ` mutation DeletePost($id: ID!) { DeletePost(id: $id) }`;
-        const variables = { id: id };
-
-        const response = await axios.post("http://localhost:5000/graphql", { query: query, variables: variables }, {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        })
-
-        if (response?.data?.data?.DeletePost) {
-          alert(response.data.data.DeletePost)
-          setAllPosts((prev) => prev.filter((p) => p.id !== id));
-          window.dispatchEvent(new Event("postDeleted"));
-
+      const query = ` mutation DeletePost($id: ID!) { DeletePost(id: $id) }`;
+      const variables = { id: deletePostId };
+      const response = await axios.post("http://localhost:5000/graphql", { query: query, variables: variables }, {
+        headers: {
+          'Content-Type': 'application/json'
         }
+      })
+      if (response?.data?.data?.DeletePost) {
+        setShowDeletePopup(true);
+        setTimeout(() => setShowDeletePopup(false), 2000);
+        setAllPosts((prev) => prev.filter((p) => p.id !== deletePostId));
+        window.dispatchEvent(new Event("postDeleted"));
       }
-      else {
-        console.log("User cancelled delete");
-      }
-    }
-    catch (err) {
+      setShowDeleteConfirm(false);
+      setDeletePostId(null);
+    } catch (err) {
       console.error(err);
+      setShowDeleteConfirm(false);
+      setDeletePostId(null);
     }
+  };
 
+  const cancelDeletePost = () => {
+    setShowDeleteConfirm(false);
+    setDeletePostId(null);
   };
 
   // Fetch posts from backend
@@ -139,6 +145,29 @@ const Main = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 relative">
+      {/* Delete Success Popup */}
+      {showDeletePopup && (
+        <div className="fixed top-20 left-0 w-full flex justify-center z-[9999] transition-all duration-500">
+          <div className="flex items-center gap-3 px-6 py-3 border-2 border-red-500 text-black rounded-xl shadow-lg bg-white">
+            <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="font-semibold text-lg">Post Deleted Successfully!</span>
+          </div>
+        </div>
+      )}
+      {/* Delete Confirm Popup */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[9999]">
+          <div className="bg-white rounded-xl shadow-2xl p-8 flex flex-col items-center border-2 border-red-400">
+            <span className="text-lg font-semibold mb-4 text-red-600">Are you sure you want to delete post?</span>
+            <div className="flex gap-4 mt-2">
+              <button onClick={confirmDeletePost} className="px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition">Yes, Delete</button>
+              <button onClick={cancelDeletePost} className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Navbar */}
       <Navbar />
 

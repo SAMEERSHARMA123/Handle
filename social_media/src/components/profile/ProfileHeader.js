@@ -3,7 +3,7 @@ import { FaCamera, FaTimes, FaUser, FaEdit, FaImage, FaSpinner, FaAt } from 'rea
 import { useMutation } from '@apollo/client';
 import { EDIT_PROFILE } from '../../graphql/mutations';
 import { motion, AnimatePresence } from 'framer-motion';
-  import { GetTokenFromCookie } from '../getToken/GetToken';
+import { GetTokenFromCookie } from '../getToken/GetToken';
 
 const SuccessPopup = ({ show }) => (
   <div
@@ -23,6 +23,24 @@ const SuccessPopup = ({ show }) => (
   </div>
 );
 
+const ErrorPopup = ({ show, message }) => (
+  <div
+    className={`fixed top-24 left-0 w-full flex justify-center z-[9999] transition-all duration-500 ${
+      show
+        ? 'opacity-100 scale-100 translate-y-0'
+        : 'opacity-0 scale-90 -translate-y-8 pointer-events-none'
+    }`}
+    style={{ pointerEvents: show ? 'auto' : 'none' }}
+  >
+    <div className="flex items-center gap-3 px-6 py-3 border-2 border-red-500 text-black rounded-xl shadow-lg bg-white">
+      <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+      <span className="font-semibold text-lg">{message}</span>
+    </div>
+  </div>
+);
+
 export default function ProfileHeader({ profile, updateProfile }) {
   const [showProfileEditForm, setShowProfileEditForm] = useState(false);
   const [name, setName] = useState(profile.name || "");
@@ -33,8 +51,10 @@ export default function ProfileHeader({ profile, updateProfile }) {
   const [coverImage, setCoverImage] = useState(profile.cover || "");
   const [showSuccess, setShowSuccess] = useState(false);
   const [editProfile, { loading }] = useMutation(EDIT_PROFILE);
-   const [user ,setUser] = useState();
-    
+  const [user ,setUser] = useState();
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  
   useEffect(()=>{
         const decodedUser = GetTokenFromCookie();
       setUser(decodedUser);
@@ -70,12 +90,6 @@ export default function ProfileHeader({ profile, updateProfile }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Allow submission if at least one field is filled
-    if (!name && !username && !caption && !image) {
-      alert("Please fill at least one field (name, username, caption, or image)");
-      return;
-    }
-    
     try {
       console.log("Submitting profile update:", { name, username, caption, image: image?.name });
       
@@ -121,13 +135,16 @@ export default function ProfileHeader({ profile, updateProfile }) {
       setImage(null);
     } catch (err) {
       console.error("Error updating profile:", err);
-      alert("Failed to update profile: " + err.message);
+      setErrorMessage("Failed to update profile: " + (err.message || "Unknown error"));
+      setShowError(true);
+      setTimeout(() => setShowError(false), 2000);
     }
   };
 
   return (
     <div className="w-full flex justify-center">
       <SuccessPopup show={showSuccess} />
+      <ErrorPopup show={showError} message={errorMessage} />
       <div className="w-full max-w-3xl relative px-4 md:px-0 md:pr-16">
         <div className="flex justify-center relative">
           <div className="relative w-full">
@@ -169,7 +186,12 @@ export default function ProfileHeader({ profile, updateProfile }) {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 className="bg-purple-600 rounded-full flex items-center justify-center w-10 h-10 xs:w-11 xs:h-11 sm:w-12 sm:h-12 shadow-lg border-2 border-white focus:outline-none cursor-pointer transition-all duration-300"
-                onClick={() => setShowProfileEditForm(true)}
+                onClick={() => {
+                  setName(profile.name || "");
+                  setUsername(profile.username || "");
+                  setCaption(profile.bio || "");
+                  setShowProfileEditForm(true);
+                }}
               >
                 <motion.div
                   animate={{ rotate: 360 }}

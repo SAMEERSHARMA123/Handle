@@ -303,7 +303,14 @@ const resolvers = {
       const user = await User.findById(id);
       if (!user) throw new Error("User not found");
       if (name) user.name = name;
-      if (username) user.username = username;
+      if (username && username !== user.username) {
+        // Only check username uniqueness if it's being changed
+        const existingUser = await User.findOne({ username });
+        if (existingUser && existingUser._id.toString() !== user._id.toString()) {
+          throw new Error("Username already taken");
+        }
+        user.username = username;
+      }
       if (caption) user.bio = caption;
       if (image) user.profileImage = await uploadToCloudinary(image);
       await user.save();

@@ -20,9 +20,29 @@ const SuccessPopup = ({ show }) => (
   </div>
 );
 
+const ErrorPopup = ({ show, message }) => (
+  <div
+    className={`fixed top-6 left-0 w-full flex justify-center z-50 transition-all duration-500 ${
+      show
+        ? 'opacity-100 scale-100 translate-y-0'
+        : 'opacity-0 scale-90 -translate-y-8 pointer-events-none'
+    }`}
+    style={{ pointerEvents: show ? 'auto' : 'none' }}
+  >
+    <div className="flex items-center gap-3 px-6 py-3 border-2 border-red-500 text-black rounded-xl shadow-lg bg-white">
+      <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+      <span className="font-semibold text-lg">{message}</span>
+    </div>
+  </div>
+);
+
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
   const token = sessionStorage.getItem('user');
 
@@ -71,7 +91,9 @@ const Login = () => {
       const { data, errors } = response.data;
 
       if (errors && errors.length > 0) {
-        alert("❌ " + errors[0].message);
+        setErrorMessage('Incorrect credential, please check.');
+        setShowError(true);
+        setTimeout(() => setShowError(false), 2000);
       } else {
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 2000);
@@ -81,13 +103,16 @@ const Login = () => {
 
     } catch (error) {
       console.error("Login failed:", error);
-      alert("❌ Server Error: " + error.message);
+      setErrorMessage('Incorrect credential, please check.');
+      setShowError(true);
+      setTimeout(() => setShowError(false), 2000);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <SuccessPopup show={showSuccess} />
+      <ErrorPopup show={showError} message={errorMessage} />
       <form
         onSubmit={handleSubmit}
         className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm"
