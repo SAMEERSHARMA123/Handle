@@ -63,16 +63,24 @@ export default function ProfileHeader({ profile, updateProfile }) {
 
   // Prevent background scrolling when form is open
   useEffect(() => {
-    if (showProfileEditForm) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
+    try {
+      if (showProfileEditForm) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = 'unset';
+      }
 
-    // Cleanup function to restore scrolling when component unmounts
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
+      // Cleanup function to restore scrolling when component unmounts
+      return () => {
+        try {
+          document.body.style.overflow = 'unset';
+        } catch (error) {
+          console.error("Error resetting body overflow on cleanup:", error);
+        }
+      };
+    } catch (error) {
+      console.error("Error setting body overflow:", error);
+    }
   }, [showProfileEditForm]);
 
   const handleCoverImageChange = (e) => {

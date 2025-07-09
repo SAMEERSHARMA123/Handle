@@ -90,23 +90,39 @@ export default function Main() {
     setProfile(prev => {
       const newProfile = { ...prev, ...updates };
       // Save to localStorage
-      localStorage.setItem('userProfile', JSON.stringify(newProfile));
+      try {
+        localStorage.setItem('userProfile', JSON.stringify(newProfile));
+      } catch (error) {
+        console.error("Error saving profile to localStorage:", error);
+      }
       return newProfile;
     });
   };
 
   useLayoutEffect(() => {
-    const node = tabRefs[activeTab].current;
-    if (node) {
-      setUnderline({ left: node.offsetLeft, width: node.offsetWidth });
+    try {
+      if (tabRefs[activeTab] && tabRefs[activeTab].current) {
+        const node = tabRefs[activeTab].current;
+        if (node) {
+          setUnderline({ left: node.offsetLeft, width: node.offsetWidth });
+        }
+      }
+    } catch (error) {
+      console.error("Error setting tab underline position:", error);
     }
   }, [activeTab]);
 
   // Set initial underline position for Feeds tab
   useLayoutEffect(() => {
-    const node = tabRefs[0].current;
-    if (node && !underline) {
-      setUnderline({ left: node.offsetLeft, width: node.offsetWidth });
+    try {
+      if (tabRefs[0] && tabRefs[0].current) {
+        const node = tabRefs[0].current;
+        if (node && !underline) {
+          setUnderline({ left: node.offsetLeft, width: node.offsetWidth });
+        }
+      }
+    } catch (error) {
+      console.error("Error setting initial tab underline position:", error);
     }
   }, [underline]);
 

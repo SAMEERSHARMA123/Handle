@@ -14,10 +14,14 @@ const Password_change = () => {
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    setError('');
-    setSuccess('');
+    try {
+      const { name, value } = e.target;
+      setFormData(prev => ({ ...prev, [name]: value }));
+      setError('');
+      setSuccess('');
+    } catch (error) {
+      console.error("Error handling form change:", error);
+    }
   };
 const CHANGE_PASSWORD_MUTATION = `
  mutation changePassword($email: String!, $oldPassword: String!, $newPassword: String!) {

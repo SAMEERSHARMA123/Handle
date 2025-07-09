@@ -21,9 +21,13 @@ const Main = () => {
   const [deletePostId, setDeletePostId] = useState(null);
 
   const scrollStories = (direction) => {
-    const scrollAmount = 150;
-    if (storyBarRef.current) {
-      storyBarRef.current.scrollLeft += direction === "left" ? -scrollAmount : scrollAmount;
+    try {
+      const scrollAmount = 150;
+      if (storyBarRef.current) {
+        storyBarRef.current.scrollLeft += direction === "left" ? -scrollAmount : scrollAmount;
+      }
+    } catch (error) {
+      console.error("Error scrolling stories:", error);
     }
   };
 
@@ -34,9 +38,12 @@ const Main = () => {
   }, [navigate, token]);
 
   useEffect(()=>{
+      try {
         const decodedUser = GetTokenFromCookie();
-      setTokens(decodedUser);
-  
+        setTokens(decodedUser);
+      } catch (error) {
+        console.error("Error getting token from cookie:", error);
+      }
     },[])
 
     const handleCommentPost = async(id,text) => {

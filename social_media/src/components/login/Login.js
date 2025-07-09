@@ -98,7 +98,11 @@ const Login = () => {
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 2000);
         setTimeout(() => navigate('/'), 2000);
-        sessionStorage.setItem('user', JSON.stringify(data.login));
+        try {
+          sessionStorage.setItem('user', JSON.stringify(data.login));
+        } catch (error) {
+          console.error("Error saving user data to sessionStorage:", error);
+        }
       }
 
     } catch (error) {

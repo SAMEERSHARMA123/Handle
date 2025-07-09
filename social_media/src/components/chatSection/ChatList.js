@@ -42,23 +42,29 @@ const ChatList = ({ activeTab }) => {
   };
 
   useEffect(() => {
-  socket.on("updateOnlineUsers", (users) => {
-    const onlineSet = new Set(users); // ✅ fast lookup set
-    setOnlineUsers(onlineSet);
-  });
+    socket.on("updateOnlineUsers", (users) => {
+      const onlineSet = new Set(users); // ✅ fast lookup set
+      setOnlineUsers(onlineSet);
+    });
 
-  return () => {
-    socket.off("updateOnlineUsers");
-  };
-}, []);
+    return () => {
+      socket.off("updateOnlineUsers");
+    };
+  }, []);
 
   useEffect(() => {
-    const decodedUser = GetTokenFromCookie(); // JWT se user decode
-    if (decodedUser?.id) {
-      setSender({ ...decodedUser, id: decodedUser.id.toString() });
-      socket.emit("join", decodedUser?.id);
+    try {
+      const decodedUser = GetTokenFromCookie(); // JWT se user decode
+      if (decodedUser?.id) {
+        setSender({ ...decodedUser, id: decodedUser.id.toString() });
+        socket.emit("join", decodedUser?.id);
+      }
+    } catch (error) {
+      console.error("Error decoding token or joining socket:", error);
     }
   }, []);
+
+
 
   const getUser = async () => {
     try {
@@ -138,10 +144,15 @@ const ChatList = ({ activeTab }) => {
   }, [sender, receiverId]);
 
   const handleChatSelect = (user) => {
-    setIsAnimating(true);
-    setSelectedChat(user);
-    setTimeout(() => setIsAnimating(false), 300);
-  }
+    try {
+      setIsAnimating(true);
+      setSelectedChat(user);
+      setTimeout(() => setIsAnimating(false), 300);
+    } catch (error) {
+      console.error("Error selecting chat:", error);
+    }
+  };
+
 
   const chat = async () => {
     if (!sender?.id || !selectedChat?.id) {
@@ -188,8 +199,8 @@ const ChatList = ({ activeTab }) => {
         }
       );
       if (response?.data?.data?.sendMessage) {
-getChat();
-       }
+        getChat();
+      }
       setText(""); // Clear input after send
       setReplyToMsg(null);
     } catch (error) {
@@ -222,26 +233,58 @@ getChat();
 
   useEffect(() => {
     if (!showAttachmentBar) return;
-    function handleClickOutside(event) {
-      if (attachmentBarRef.current && !attachmentBarRef.current.contains(event.target)) {
-        setShowAttachmentBar(false);
+    
+    try {
+      function handleClickOutside(event) {
+        try {
+          if (attachmentBarRef.current && !attachmentBarRef.current.contains(event.target)) {
+            setShowAttachmentBar(false);
+          }
+        } catch (error) {
+          console.error("Error handling click outside attachment bar:", error);
+        }
       }
+      
+      document.addEventListener('mousedown', handleClickOutside);
+      
+      return () => {
+        try {
+          document.removeEventListener('mousedown', handleClickOutside);
+        } catch (error) {
+          console.error("Error removing event listener:", error);
+        }
+      };
+    } catch (error) {
+      console.error("Error setting up attachment bar click handler:", error);
     }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
   }, [showAttachmentBar]);
 
   useEffect(() => {
     if (!headerMenuOpen) return;
-    function handleClickOutside(event) {
-      if (headerMenuRef.current && !headerMenuRef.current.contains(event.target)) {
-        setHeaderMenuOpen(false);
+    
+    try {
+      function handleClickOutside(event) {
+        try {
+          if (headerMenuRef.current && !headerMenuRef.current.contains(event.target)) {
+            setHeaderMenuOpen(false);
+          }
+        } catch (error) {
+          console.error("Error handling click outside header menu:", error);
+        }
       }
+      
+      document.addEventListener('mousedown', handleClickOutside);
+      
+      return () => {
+        try {
+          document.removeEventListener('mousedown', handleClickOutside);
+        } catch (error) {
+          console.error("Error removing event listener:", error);
+        }
+      };
+    } catch (error) {
+      console.error("Error setting up header menu click handler:", error);
     }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [headerMenuOpen]);
 
   return (
@@ -263,7 +306,7 @@ getChat();
                     alt={user.name}
                     className="w-12 h-12 rounded-full object-cover ring-2 ring-purple-100"
                   />
-                 {onlineUsers.has(user.id) && <span className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white bg-green-500"></span>}
+                  {onlineUsers.has(user.id) && <span className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white bg-green-500"></span>}
                 </div>
                 <div className="ml-3 flex-1 min-w-0">
                   <h3 className="text-sm font-semibold text-gray-900 truncate">{user.name}</h3>
@@ -275,32 +318,32 @@ getChat();
         </div>
       </div>
       <div className="flex-1 flex flex-col h-full min-h-0">
-      {selectedChat ? (
+        {selectedChat ? (
           <div className="flex flex-col h-full min-h-0 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] md:ml-8 md:mr-4 overflow-hidden transform transition-all duration-300 ease-in-out">
-          {/* Header */}
-          <div className="flex-none border-b border-gray-100 p-4 flex items-center justify-between bg-white">
-            <div className="flex items-center">
-              <button
-                onClick={() => setSelectedChat(null)}
-                className="md:hidden mr-2 p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-              </button>
-              <img
-                src={selectedChat.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedChat.name)}`}
-                alt={selectedChat.name}
-                className="w-12 h-12 rounded-full ring-2 ring-purple-100"
-              />
-              <div className="ml-3">
-                <h2 className="text-lg font-semibold text-gray-900">{selectedChat.name}</h2>
-                <p className={`text-xs ${onlineUsers.has(selectedChat?.id) ? 'text-green-500' : 'text-gray-400'}`}>{onlineUsers.has(selectedChat?.id) ? 'Online' : 'Offline'}</p>
+            {/* Header */}
+            <div className="flex-none border-b border-gray-100 p-4 flex items-center justify-between bg-white">
+              <div className="flex items-center">
+                <button
+                  onClick={() => setSelectedChat(null)}
+                  className="md:hidden mr-2 p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </button>
+                <img
+                  src={selectedChat.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedChat.name)}`}
+                  alt={selectedChat.name}
+                  className="w-12 h-12 rounded-full ring-2 ring-purple-100"
+                />
+                <div className="ml-3">
+                  <h2 className="text-lg font-semibold text-gray-900">{selectedChat.name}</h2>
+                  <p className={`text-xs ${onlineUsers.has(selectedChat?.id) ? 'text-green-500' : 'text-gray-400'}`}>{onlineUsers.has(selectedChat?.id) ? 'Online' : 'Offline'}</p>
+                </div>
               </div>
-            </div>
               <div className="flex items-center space-x-2 mb-[80px] md:mb-0 relative">
-              <button className="p-2 hover:bg-gray-100 rounded-full"><PhoneIcon className="h-5 w-5 text-gray-600" /></button>
-              <button className="p-2 hover:bg-gray-100 rounded-full"><VideoCameraIcon className="h-5 w-5 text-gray-600" /></button>
+                <button className="p-2 hover:bg-gray-100 rounded-full"><PhoneIcon className="h-5 w-5 text-gray-600" /></button>
+                <button className="p-2 hover:bg-gray-100 rounded-full"><VideoCameraIcon className="h-5 w-5 text-gray-600" /></button>
                 <button className="p-2 hover:bg-gray-100 rounded-full" onClick={() => setHeaderMenuOpen((v) => !v)} ref={headerMenuRef}>
                   <EllipsisVerticalIcon className="h-5 w-5 text-gray-600" />
                 </button>
@@ -311,9 +354,9 @@ getChat();
                 )}
               </div>
             </div>
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar min-h-0 bg-gray-50">
-            <div className="space-y-4">
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar min-h-0 bg-gray-50">
+              <div className="space-y-4">
                 {messages.map((msg) => {
                   const isSent = msg?.sender?.id === sender?.id;
                   let quoted = null;
@@ -471,19 +514,29 @@ getChat();
                           <span className="text-[9px] font-semibold text-purple-700 group-hover:text-purple-900 tracking-wide transition-all duration-150">GIF</span>
                         </button>
                         <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: '-8px', width: 0, height: 0, borderLeft: '8px solid transparent', borderRight: '8px solid transparent', borderTop: '8px solid rgba(255,255,255,0.7)', filter: 'blur(0.5px) drop-shadow(0 2px 4px rgba(168,139,250,0.10)' }} />
-            </div>
-          </div>
+                      </div>
+                    </div>
                   )}
                 </div>
-              <input
-                type="text"
+                <input
+                  type="text"
                   value={text}
-                onChange={(q) => { setText(q.target.value) }}
-                  onKeyDown={e => { if (e.key === 'Enter' && text.trim()) { e.preventDefault(); chat(); } }}
-                placeholder="Type a message..."
+                  onChange={(q) => { setText(q.target.value) }}
+                  onKeyDown={(e) => {
+                    try {
+                      if (e.key === 'Enter' && text.trim()) {
+                        e.preventDefault();
+                        chat();
+                      }
+                    } catch (error) {
+                      console.error("Error while sending message on Enter key:", error);
+                    }
+                  }}
+                  placeholder="Type a message..."
                   className="flex-1 border border-gray-200 rounded-full px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   style={{ minWidth: 0 }}
                 />
+
                 <button className="p-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors duration-200 flex items-center justify-center" type="button">
                   {/* Modern, stylish mic icon */}
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -494,22 +547,22 @@ getChat();
                   </svg>
                 </button>
                 <button className="p-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors duration-200 flex items-center justify-center" type="button">
-                <PaperAirplaneIcon onClick={chat} className="h-5 w-5" />
-              </button>
+                  <PaperAirplaneIcon onClick={chat} className="h-5 w-5" />
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="hidden md:flex flex-1 items-center justify-center bg-white ml-8 mr-4 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
-          <div className="text-center animate-fadeIn">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4-0.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            <h3 className="mt-2 text-sm font-semibold text-gray-900">No chat selected</h3>
-            <p className="mt-1 text-sm text-gray-500">Select a user to start messaging</p>
+        ) : (
+          <div className="hidden md:flex flex-1 items-center justify-center bg-white ml-8 mr-4 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+            <div className="text-center animate-fadeIn">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4-0.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              <h3 className="mt-2 text-sm font-semibold text-gray-900">No chat selected</h3>
+              <p className="mt-1 text-sm text-gray-500">Select a user to start messaging</p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
     </div>
   );

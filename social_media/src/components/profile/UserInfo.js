@@ -157,7 +157,11 @@ const [followCounts, setFollowCounts] = useState(profile.stats.followers);
     },
   };
   setProfile(updatedProfile);
-  localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
+  try {
+    localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
+  } catch (error) {
+    console.error("Error saving user profile to localStorage:", error);
+  }
     },
     onError: (err) => {
       alert("Something went wrong: " + err.message);

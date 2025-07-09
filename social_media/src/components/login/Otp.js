@@ -87,13 +87,25 @@ const OtpInput = () => {
     setOtp(newOtp);
 
     if (value && index < 5) {
-      inputRefs.current[index + 1].focus();
+      try {
+        if (inputRefs.current[index + 1]) {
+          inputRefs.current[index + 1].focus();
+        }
+      } catch (error) {
+        console.error("Error focusing next input:", error);
+      }
     }
   };
 
   const handleKeyDown = (e, index) => {
-    if (e.key === 'Backspace' && index > 0 && !otp[index]) {
-      inputRefs.current[index - 1].focus();
+    try {
+      if (e.key === 'Backspace' && index > 0 && !otp[index]) {
+        if (inputRefs.current[index - 1]) {
+          inputRefs.current[index - 1].focus();
+        }
+      }
+    } catch (error) {
+      console.error("Error handling key down event:", error);
     }
   };
 

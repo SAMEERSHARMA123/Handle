@@ -118,8 +118,12 @@ const RegisterForm = () => {
       dispatch(setRegisterFormData(reduxData));
       
       // Also store in localStorage as backup
-      localStorage.setItem('otpData', JSON.stringify(reduxData));
-      console.log('Stored OTP data in localStorage');
+      try {
+        localStorage.setItem('otpData', JSON.stringify(reduxData));
+        console.log('Stored OTP data in localStorage');
+      } catch (error) {
+        console.error("Error storing OTP data in localStorage:", error);
+      }
       
       // Navigate to OTP page
       navigate('/otp');

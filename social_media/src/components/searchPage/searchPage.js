@@ -89,15 +89,25 @@ useEffect(() => {
   }, [navigate, token]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('recentSearches');
-    if (saved) {
-      setRecentSearches(JSON.parse(saved));
+    try {
+      const saved = localStorage.getItem('recentSearches');
+      if (saved) {
+        setRecentSearches(JSON.parse(saved));
+      }
+    } catch (error) {
+      console.error("Error loading recent searches from localStorage:", error);
+      // Reset to empty array if there's an error
+      setRecentSearches([]);
     }
   }, []);
 
   useEffect(() => {
-    if (recentSearches.length > 0) {
-      localStorage.setItem('recentSearches', JSON.stringify(recentSearches));
+    try {
+      if (recentSearches.length > 0) {
+        localStorage.setItem('recentSearches', JSON.stringify(recentSearches));
+      }
+    } catch (error) {
+      console.error("Error saving recent searches to localStorage:", error);
     }
   }, [recentSearches]);
 
@@ -219,38 +229,64 @@ useEffect(() => {
 
   // Update arrow visibility based on scroll position
   const updateArrowVisibility = () => {
-    const container = suggestionsRowRef.current;
-    if (!container) return;
-    setShowLeftArrow(container.scrollLeft > 10);
-    setShowRightArrow(container.scrollWidth - container.scrollLeft - container.clientWidth > 10);
+    try {
+      const container = suggestionsRowRef.current;
+      if (!container) return;
+      setShowLeftArrow(container.scrollLeft > 10);
+      setShowRightArrow(container.scrollWidth - container.scrollLeft - container.clientWidth > 10);
+    } catch (error) {
+      console.error("Error updating arrow visibility:", error);
+    }
   };
 
   React.useEffect(() => {
-    updateArrowVisibility();
-    const container = suggestionsRowRef.current;
-    if (!container) return;
-    container.addEventListener('scroll', updateArrowVisibility);
-    window.addEventListener('resize', updateArrowVisibility);
-    return () => {
-      container.removeEventListener('scroll', updateArrowVisibility);
-      window.removeEventListener('resize', updateArrowVisibility);
-    };
+    try {
+      updateArrowVisibility();
+      const container = suggestionsRowRef.current;
+      if (!container) return;
+      
+      try {
+        container.addEventListener('scroll', updateArrowVisibility);
+        window.addEventListener('resize', updateArrowVisibility);
+      } catch (error) {
+        console.error("Error adding event listeners:", error);
+      }
+      
+      return () => {
+        try {
+          container.removeEventListener('scroll', updateArrowVisibility);
+          window.removeEventListener('resize', updateArrowVisibility);
+        } catch (error) {
+          console.error("Error removing event listeners:", error);
+        }
+      };
+    } catch (error) {
+      console.error("Error in arrow visibility effect:", error);
+    }
   }, []);
 
   // Also update arrow visibility when suggestionsToShow changes
   React.useEffect(() => {
-    setTimeout(updateArrowVisibility, 0);
+    try {
+      setTimeout(updateArrowVisibility, 0);
+    } catch (error) {
+      console.error("Error setting timeout for arrow visibility:", error);
+    }
   }, [suggestionsToShow]);
 
   // Scroll handler for arrows
   const scrollSuggestions = (direction) => {
-    const container = suggestionsRowRef.current;
-    if (!container) return;
-    const scrollAmount = 220 + 24; // card width + gap
-    if (direction === 'left') {
-      container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-    } else {
-      container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    try {
+      const container = suggestionsRowRef.current;
+      if (!container) return;
+      const scrollAmount = 220 + 24; // card width + gap
+      if (direction === 'left') {
+        container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+      } else {
+        container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      }
+    } catch (error) {
+      console.error("Error scrolling suggestions:", error);
     }
   };
 

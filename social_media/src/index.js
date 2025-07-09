@@ -10,11 +10,22 @@ import { ApolloProvider } from '@apollo/client';
 import client from './apolloClient';
 
 // Add Tailwind CSS CDN
-const tailwindScript = document.createElement('script');
-tailwindScript.src = 'https://cdn.tailwindcss.com';
-document.head.appendChild(tailwindScript);
+try {
+  const tailwindScript = document.createElement('script');
+  tailwindScript.src = 'https://cdn.tailwindcss.com';
+  document.head.appendChild(tailwindScript);
+} catch (error) {
+  console.error("Error adding Tailwind CSS script:", error);
+}
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+let root;
+try {
+  root = ReactDOM.createRoot(document.getElementById('root'));
+} catch (error) {
+  console.error("Error creating React root:", error);
+  // Fallback to body if root element not found
+  root = ReactDOM.createRoot(document.body);
+}
 root.render(
     <ApolloProvider client={client}>
        <Provider store={store}>

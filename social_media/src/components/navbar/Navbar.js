@@ -21,7 +21,9 @@ const Navbar = () => {
     if (userProfile) {
       profileImage = userProfile.avatar || userProfile.profileImage || profileImage;
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error("Error parsing user profile from localStorage:", e);
+  }
 
   return (
     <>

@@ -125,12 +125,23 @@ app.use('/graphql', express.json(), (req, res, next) => {
 const httpServer = http.createServer(app);
 
 // Initialize socket.io
-const io = new Server(httpServer, {
-  cors: {
-    origin: 'http://localhost:3000',
-    credentials: true,
-  },
-});
+let io;
+try {
+  io = new Server(httpServer, {
+    cors: {
+      origin: 'http://localhost:3000',
+      credentials: true,
+    },
+  });
+} catch (error) {
+  console.error("Error initializing Socket.io server:", error);
+  // Create a dummy io object to prevent crashes
+  io = {
+    on: () => {},
+    emit: () => {},
+    to: () => ({ emit: () => {} })
+  };
+}
 
 // Store `io` inside Express
 app.set("io", io);
@@ -138,30 +149,47 @@ app.set("io", io);
 const onlineUsers = new Map();
 // Handle socket connections
 io.on("connection", (socket) => {
-  const userId = socket.handshake.query.userId;
-  if(userId){
-  console.log("⚡ Socket connected:", socket.id);
-onlineUsers.set(userId, socket.id);
-socket.userId = userId;
-socket.join(userId);
-
-io.emit("updateOnlineUsers", Array.from(onlineUsers.keys()));
-  }
-  socket.on("join", (userId) => {
-    socket.join(userId);
-    socket.userId = userId;
-    onlineUsers.set(userId, socket.id);
-    console.log(`🟢 User joined room: ${userId}`);
-    io.emit("updateOnlineUsers", Array.from(onlineUsers.keys()));
-  });
-
-  socket.on("disconnect", () => {
-    console.log("❌ Socket disconnected:", socket.id);
-    if (socket.userId) {
-      onlineUsers.delete(socket.userId); // ❌ remove user from online list
-      io.emit("updateOnlineUsers", Array.from(onlineUsers.keys())); // 🔁 broadcast update
+  try {
+    const userId = socket.handshake.query.userId;
+    if(userId) {
+      try {
+        console.log("⚡ Socket connected:", socket.id);
+        onlineUsers.set(userId, socket.id);
+        socket.userId = userId;
+        socket.join(userId);
+        
+        io.emit("updateOnlineUsers", Array.from(onlineUsers.keys()));
+      } catch (error) {
+        console.error("Error handling socket connection:", error);
+      }
     }
-  });
+    
+    socket.on("join", (userId) => {
+      try {
+        socket.join(userId);
+        socket.userId = userId;
+        onlineUsers.set(userId, socket.id);
+        console.log(`🟢 User joined room: ${userId}`);
+        io.emit("updateOnlineUsers", Array.from(onlineUsers.keys()));
+      } catch (error) {
+        console.error("Error handling socket join:", error);
+      }
+    });
+
+    socket.on("disconnect", () => {
+      try {
+        console.log("❌ Socket disconnected:", socket.id);
+        if (socket.userId) {
+          onlineUsers.delete(socket.userId); // ❌ remove user from online list
+          io.emit("updateOnlineUsers", Array.from(onlineUsers.keys())); // 🔁 broadcast update
+        }
+      } catch (error) {
+        console.error("Error handling socket disconnect:", error);
+      }
+    });
+  } catch (error) {
+    console.error("Error in socket connection handler:", error);
+  }
 });
 
 // Start Apollo Server
